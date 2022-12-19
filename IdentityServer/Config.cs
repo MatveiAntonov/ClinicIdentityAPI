@@ -1,5 +1,6 @@
 ﻿using IdentityServer4;
 using IdentityServer4.Models;
+using System.Diagnostics.Metrics;
 
 namespace IdentityServer.Server
 {
@@ -11,7 +12,8 @@ namespace IdentityServer.Server
                 new IdentityResources.OpenId(),
                 new IdentityResources.Profile(),
                 new IdentityResources.Address(),
-                new IdentityResource("roles", "User role(s)", new List<string> { "role" })
+                new IdentityResource("roles", "User role(s)", new List<string> { "role" }),
+                new IdentityResource("country", "Your country", new List<string> { "country" })
             };
 
         public static IEnumerable<ApiScope> ApiScopes =>
@@ -25,7 +27,8 @@ namespace IdentityServer.Server
             {
                 new ApiResource("serviceapi", "ServiceAPI")
                 {
-                    Scopes = { "serviceapi.scope" }
+                    Scopes = { "serviceapi.scope" },
+                    UserClaims = new List<string> { "role" }
                 }
             };
 
@@ -44,7 +47,8 @@ namespace IdentityServer.Server
                         IdentityServerConstants.StandardScopes.Profile,
                         IdentityServerConstants.StandardScopes.Address,
                         "roles",
-						"serviceapi.scope"
+						"serviceapi.scope",
+						"country"
 					},
                     ClientSecrets =
                     {
@@ -53,7 +57,10 @@ namespace IdentityServer.Server
                     RequirePkce = true,
                     PostLogoutRedirectUris = new List<string> { "https://localhost:5010/signout-callback-oidc" },
                     RequireConsent = true,
-                    ClientUri = "https://localhost:5010"
+                    ClientUri = "https://localhost:5010",
+                    AccessTokenLifetime = 120,
+                    AllowOfflineAccess = true,
+                    UpdateAccessTokenClaimsOnRefresh = true
                 }
             };
     }

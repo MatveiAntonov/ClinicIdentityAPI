@@ -46,7 +46,10 @@ builder.Services.AddAuthentication(options =>
     options.Scope.Add("roles");
     options.ClaimActions.MapUniqueJsonKey("role", "role");
     options.Scope.Add("serviceapi.scope");
-    options.TokenValidationParameters = new TokenValidationParameters
+    options.Scope.Add("country");
+	options.ClaimActions.MapUniqueJsonKey("country", "country");
+    options.Scope.Add("offline_access");
+	options.TokenValidationParameters = new TokenValidationParameters
     {
         RoleClaimType = JwtClaimTypes.Role
     };
@@ -54,6 +57,16 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddTransient<BearerTokenHandler>();
+
+builder.Services.AddAuthorization(authOpt =>
+{
+    authOpt.AddPolicy("CanCreateAndModifyData", policyBuilder =>
+    {
+        policyBuilder.RequireAuthenticatedUser();
+        policyBuilder.RequireRole("role", "Administrator");
+        policyBuilder.RequireClaim("country", "USA");
+    });
+}); 
 
 builder.Services.AddControllersWithViews();
 

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
+using System.Net;
 using System.Security.Claims;
 using System.Text.Json;
 
@@ -25,12 +26,21 @@ namespace IdentityServer.Client.Controllers
 
             var response = await httpClient.GetAsync("1.0/services").ConfigureAwait(false);
 
-            response.EnsureSuccessStatusCode();
-
+            if (response.IsSuccessStatusCode)
+            {
             var servicesString = await response.Content.ReadAsStringAsync();
             var services = JsonSerializer.Deserialize<List<ServiceViewModel>>(servicesString,
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                
             return View(services);
+            }
+            else if (response.StatusCode == HttpStatusCode.Unauthorized || 
+                response.StatusCode == HttpStatusCode.Forbidden)
+            {
+                return RedirectToAction("AccessDenied", "Auth");
+            }
+
+            throw new Exception("There is a problem accessing the API");
         }
 
         public IActionResult Index()
@@ -38,7 +48,7 @@ namespace IdentityServer.Client.Controllers
             return View();
         }
 
-        [Authorize(Roles = "Administrator")]
+        [Authorize(Policy = "CanCreateAndModifyData")]
 		public async Task<IActionResult> Privacy()
 		{
             var idpClient = _httpClientFactory.CreateClient("IDPClient");

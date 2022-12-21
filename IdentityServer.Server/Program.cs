@@ -1,5 +1,6 @@
 using EmailService;
 using IdentityServer.Server;
+using IdentityServer.Server.CustomTokenProviders;
 using IdentityServer.Server.Entities;
 using IdentityServer.Server.InitialSeed;
 using IdentityServerHost.Quickstart.UI;
@@ -29,9 +30,16 @@ builder.Services.AddIdentity<User, IdentityRole>(opt =>
 {
     opt.Password.RequireNonAlphanumeric = false;
     opt.Password.RequiredLength = 8;
+    opt.User.RequireUniqueEmail = true;
+    opt.SignIn.RequireConfirmedEmail = true;
+    opt.Tokens.EmailConfirmationTokenProvider = "emailconfirmation";
+    opt.Lockout.AllowedForNewUsers= true;
+    opt.Lockout.DefaultLockoutTimeSpan= TimeSpan.FromMinutes(2);
+    opt.Lockout.MaxFailedAccessAttempts = 3;
 })
     .AddEntityFrameworkStores<UserContext>()
-    .AddDefaultTokenProviders();
+    .AddDefaultTokenProviders()
+    .AddTokenProvider<EmailConfirmationTokenProvider<User>>("emailconfirmation");
 
 
 builder.Services.AddIdentityServer(options =>
@@ -55,6 +63,9 @@ builder.Services.AddIdentityServer(options =>
 
 builder.Services.Configure<DataProtectionTokenProviderOptions>(opt =>
     opt.TokenLifespan = TimeSpan.FromHours(2));
+
+builder.Services.Configure<EmailConfirmationTokenProviderOptions>(opt =>
+    opt.TokenLifespan = TimeSpan.FromDays(3));
 
 var app = builder.Build();
 

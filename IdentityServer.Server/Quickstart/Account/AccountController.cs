@@ -278,24 +278,30 @@ namespace IdentityServerHost.Quickstart.UI
                 token,
                 email = user.Email,
                 returnUrl
-            }, Request.Scheme);            var message = new Message(new string[] { user.Email }, "Reset password token", callback,
+            }, Request.Scheme);
+
+            var message = new Message(new string[] { user.Email }, "Reset password token", callback,
                 null);
             await _emailSender.SendEmailAsync(message);
             return RedirectToAction(nameof(ForgotPasswordConfirmation));
         }
 
         [HttpGet]
-        public IActionResult ResetPassword(string token, string email, string returnUrl)        {
+        public IActionResult ResetPassword(string token, string email, string returnUrl)
+        {
             ViewData["ReturnUrl"] = returnUrl;
             var model = new ResetPasswordModel { Token = token, Email = email };
             return View(model);
-        }        [HttpPost]
+        }
+
+        [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ResetPassword(ResetPasswordModel resetPasswordModel,
             string returnUrl)
         {
             if (!ModelState.IsValid)
-                return View(resetPasswordModel);
+                return View(resetPasswordModel);
+
             var user = await _userManager.FindByEmailAsync(resetPasswordModel.Email);
             if (user == null)
                 RedirectToAction(nameof(ResetPasswordConfirmation), new { returnUrl });
@@ -314,7 +320,9 @@ namespace IdentityServerHost.Quickstart.UI
             }
 
             return RedirectToAction(nameof(ResetPasswordConfirmation), new { returnUrl });
-        }        [HttpGet]
+        }
+
+        [HttpGet]
         public IActionResult ResetPasswordConfirmation(string returnUrl)
         {
             ViewData["ReturnUrl"] = returnUrl;

@@ -146,14 +146,107 @@ namespace IdentityServerHost.Quickstart.UI
                         throw new Exception("invalid return URL");
                     }
                 }
-                await _events.RaiseAsync(new UserLoginFailureEvent(model.Username, "invalid credentials",
-               clientId: context?.Client.ClientId));
-                ModelState.AddModelError(string.Empty, AccountOptions.InvalidCredentialsErrorMessage);
+                if (result.IsLockedOut)
+                {
+                    await HandleLockout(model.Username, model.ReturnUrl);
+                }
+                if (result.RequiresTwoFactor)
+                {
+                    return RedirectToAction(nameof(LoginTwoStep),
+                        new { Email = model.Username, model.RememberLogin, model.ReturnUrl });
+                }
+                else
+                {
+                    await _events.RaiseAsync(new UserLoginFailureEvent(model.Username, "invalid credentials",
+                        clientId: context?.Client.ClientId));
+                    ModelState.AddModelError(string.Empty, AccountOptions.InvalidLoginAttempt);
+                }
             }
 
             // something went wrong, show form with error
             var vm = await BuildLoginViewModelAsync(model);
             return View(vm);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> LoginTwoStep(string email, bool rememberLogin, string
+            returnUrl)
+        {
+            var user = await _userManager.FindByEmailAsync(email);
+            if (user == null)
+            {
+                return RedirectToAction(nameof(Error), new { returnUrl });
+            }
+
+            var providers = await _userManager.GetValidTwoFactorProvidersAsync(user);
+            if (!providers.Contains("Email"))
+            {
+                return RedirectToAction(nameof(Error), new { returnUrl });
+            }
+
+            var token = await _userManager.GenerateTwoFactorTokenAsync(user, "Email");
+
+            var message = new Message(new string[] { email }, "Authentication token", token, null);
+            await _emailSender.SendEmailAsync(message);
+
+            ViewData["RouteData"] = new Dictionary<string, string>
+            {
+                { "returnUrl", returnUrl },
+                { "email", email }
+            };
+
+            return View();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> LoginTwoStep(TwoStepModel twoStepModel, string returnUrl,
+            string email)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(twoStepModel);
+            }
+
+            var user = await _signInManager.GetTwoFactorAuthenticationUserAsync();
+            if (user == null)
+            {
+                return RedirectToAction(nameof(Error), new { returnUrl });
+            }
+
+            var result = await _signInManager.TwoFactorSignInAsync("Email",
+                twoStepModel.TwoFactorCode, twoStepModel.RememberLogin, rememberClient: false);
+            if (result.Succeeded)
+            {
+                return this.LoadingPage("Redirect", returnUrl);
+            }
+            else if (result.IsLockedOut)
+            {
+                await HandleLockout(email, returnUrl);
+                return View(twoStepModel);
+            }
+            else
+            {
+                return RedirectToAction(nameof(Error), new { returnUrl });
+            }
+        }
+
+
+
+        private async Task HandleLockout(string email, string returnUrl)
+        {
+            var user = await _userManager.FindByEmailAsync(email);
+            var forgotPassLink = Url.Action(nameof(ForgotPassword), "Account",
+                new { returnUrl }, Request.Scheme);
+            var content = string.Format(@"Your account is locked out,
+                to reset your password, please click this link: {0}", forgotPassLink);
+
+            var message = new Message(new string[] { user.Email },
+                "Locked out account information", content, null);
+            await _emailSender.SendEmailAsync(message);
+
+            ModelState.AddModelError("", "The account is locked out");
+
         }
 
 
@@ -238,6 +331,8 @@ namespace IdentityServerHost.Quickstart.UI
                 return View(userModel);
             }
 
+            await _userManager.SetTwoFactorEnabledAsync(user, true);
+
             await _userManager.AddToRoleAsync(user, "Visitor");
 
             await _userManager.AddClaimsAsync(user, new List<Claim>
@@ -249,8 +344,55 @@ namespace IdentityServerHost.Quickstart.UI
                 new Claim("country", user.Country)
             });
 
-            return Redirect(returnUrl);
+            await SendEmailConfirmationLink(user, returnUrl);
+
+            return Redirect(nameof(SuccessRegistration));
         }
+
+        private async Task SendEmailConfirmationLink(User user, string returnUrl)
+        {
+            var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+
+            var confirmationLink = Url.Action(nameof(ConfirmEmail), "Account",
+                new { token, email = user.Email, returnUrl }, Request.Scheme);
+
+            var message = new Message(new string[] { user.Email },
+                "Confirmation email link", confirmationLink, null);
+
+            await _emailSender.SendEmailAsync(message);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ConfirmEmail(string token, string email, string returnUrl)
+        {
+            ViewData["ReturnUrl"] = returnUrl;
+
+            var user = await _userManager.FindByEmailAsync(email);
+            if (user == null)
+                return RedirectToAction(nameof(Error), new { returnUrl });
+
+            var result = await _userManager.ConfirmEmailAsync(user, token);
+            if (result.Succeeded)
+                return View(nameof(ConfirmEmail));
+            else
+                return RedirectToAction(nameof(Error), new { returnUrl });
+
+        }
+
+        [HttpGet]
+        public IActionResult SuccessRegistration()
+        {
+            return View();
+        }
+
+        [HttpGet]
+        public IActionResult Error(string returnUrl)
+        {
+            ViewData["ReturnUrl"] = returnUrl;
+            return View();
+        }
+
+
 
         [HttpGet]
         public IActionResult ForgotPassword(string returnUrl)
@@ -317,6 +459,12 @@ namespace IdentityServerHost.Quickstart.UI
                 }
 
                 return View();
+            }
+
+            if (await _userManager.IsLockedOutAsync(user))
+            {
+                await _userManager.SetLockoutEndDateAsync(user, new DateTimeOffset(new
+                    DateTime(1000, 1, 1, 1, 1, 1)));
             }
 
             return RedirectToAction(nameof(ResetPasswordConfirmation), new { returnUrl });

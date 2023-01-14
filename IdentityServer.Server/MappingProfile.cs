@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using IdentityServer.Server.Entities;
 using IdentityServer.Server.Entities.ViewModels;
+using Microsoft.AspNetCore.Identity;
 
 namespace IdentityServer.Server
 {
@@ -8,7 +9,7 @@ namespace IdentityServer.Server
     {
         public MappingProfile()
         {
-            CreateMap<UserRegistrationModel, User>()
+            CreateMap<UserRegistrationModel, IdentityUser>()
                 .ForMember(u => u.UserName, opt => opt.MapFrom(x => x.Email));
         }
     }

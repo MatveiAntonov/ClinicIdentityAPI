@@ -26,7 +26,7 @@ var migrationAssembly = typeof(Program).GetTypeInfo().Assembly.GetName().Name;
 builder.Services.AddDbContext<UserContext>(options => options
     .UseSqlServer(builder.Configuration.GetConnectionString("identitySqlConnection")));
 
-builder.Services.AddIdentity<User, IdentityRole>(opt =>
+builder.Services.AddIdentity<IdentityUser, IdentityRole>(opt =>
 {
     opt.Password.RequireNonAlphanumeric = false;
     opt.Password.RequiredLength = 8;
@@ -39,7 +39,7 @@ builder.Services.AddIdentity<User, IdentityRole>(opt =>
 })
     .AddEntityFrameworkStores<UserContext>()
     .AddDefaultTokenProviders()
-    .AddTokenProvider<EmailConfirmationTokenProvider<User>>("emailconfirmation");
+    .AddTokenProvider<EmailConfirmationTokenProvider<IdentityUser>>("emailconfirmation");
 
 
 builder.Services.AddIdentityServer(options =>
@@ -58,7 +58,7 @@ builder.Services.AddIdentityServer(options =>
             o.UseSqlServer(builder.Configuration.GetConnectionString("sqlConnection"),
         sql => sql.MigrationsAssembly(migrationAssembly));
     })
-    .AddAspNetIdentity<User>()
+    .AddAspNetIdentity<IdentityUser>()
     .AddDeveloperSigningCredential();
 
 builder.Services.Configure<DataProtectionTokenProviderOptions>(opt =>
@@ -82,8 +82,8 @@ app.UseEndpoints(endpoints =>
 
 var config = app.Services.GetRequiredService<IConfiguration>();
 var connectionString = config.GetConnectionString("identitySqlConnection");
-SeedUserData.EnsureSeedData(connectionString);
 
 app.MigrateDatabase();
+SeedUserData.EnsureSeedData(connectionString);
 
 app.Run();

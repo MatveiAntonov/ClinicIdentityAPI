@@ -10,14 +10,14 @@ namespace IdentityServer.Server.Entities.Configuration
         {
             builder.HasData(new IdentityRole
             {
-                Name = "Administrator",
-                NormalizedName = "ADMINISTRATOR",
+                Name = "Receptionist",
+                NormalizedName = "RECEPTIONIST",
                 Id = "c3a0cb55-ddaf-4f2f-8419-f3f937698aa1"
             },
             new IdentityRole
             {
-                Name = "Visitor",
-                NormalizedName = "VISITOR",
+                Name = "Patient",
+                NormalizedName = "PATIENT",
                 Id = "6d506b42-9fa0-4ef7-a92a-0b5b0a123665"
             });
 

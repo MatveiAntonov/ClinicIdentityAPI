@@ -42,12 +42,9 @@ builder.Services.AddAuthentication(options =>
     options.ClientSecret = "ServiceClientSecret";
     options.GetClaimsFromUserInfoEndpoint = true;
     options.ClaimActions.DeleteClaims(new string[] { "sid", "idp"});
-    options.Scope.Add("address");
     options.Scope.Add("roles");
     options.ClaimActions.MapUniqueJsonKey("role", "role");
     options.Scope.Add("serviceapi.scope");
-    options.Scope.Add("country");
-	options.ClaimActions.MapUniqueJsonKey("country", "country");
     options.Scope.Add("offline_access");
 	options.TokenValidationParameters = new TokenValidationParameters
     {
@@ -58,15 +55,7 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddTransient<BearerTokenHandler>();
 
-builder.Services.AddAuthorization(authOpt =>
-{
-    authOpt.AddPolicy("CanCreateAndModifyData", policyBuilder =>
-    {
-        policyBuilder.RequireAuthenticatedUser();
-        policyBuilder.RequireRole("role", "Administrator");
-        policyBuilder.RequireClaim("country", "USA");
-    });
-}); 
+builder.Services.AddAuthorization(); 
 
 builder.Services.AddControllersWithViews();
 

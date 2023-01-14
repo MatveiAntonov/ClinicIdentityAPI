@@ -40,14 +40,14 @@ namespace IdentityServerHost.Quickstart.UI
         private readonly IClientStore _clientStore;
         private readonly IAuthenticationSchemeProvider _schemeProvider;
         private readonly IEventService _events;
-        private readonly UserManager<User> _userManager;
-        private readonly SignInManager<User> _signInManager;
+        private readonly UserManager<IdentityUser> _userManager;
+        private readonly SignInManager<IdentityUser> _signInManager;
         private readonly IMapper _mapper;
         private readonly IEmailSender _emailSender;
 
         public AccountController(IIdentityServerInteractionService interaction, IClientStore clientStore,
             IAuthenticationSchemeProvider schemeProvider, IEventService events,
-            UserManager<User> userManager, SignInManager<User> signInManager, IMapper mapper,
+            UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager, IMapper mapper,
             IEmailSender emailSender)
         {
             _interaction = interaction;
@@ -319,7 +319,10 @@ namespace IdentityServerHost.Quickstart.UI
                 return View(userModel);
             }
 
-            var user = _mapper.Map<User>(userModel);
+            var user = _mapper.Map<IdentityUser>(userModel);
+
+
+            // CHANGE
 
             var result = await _userManager.CreateAsync(user, userModel.Password);
             if (!result.Succeeded)
@@ -331,17 +334,13 @@ namespace IdentityServerHost.Quickstart.UI
                 return View(userModel);
             }
 
-            await _userManager.SetTwoFactorEnabledAsync(user, true);
+            //await _userManager.SetTwoFactorEnabledAsync(user, true);
 
-            await _userManager.AddToRoleAsync(user, "Visitor");
+            await _userManager.AddToRoleAsync(user, "Patient");
 
             await _userManager.AddClaimsAsync(user, new List<Claim>
             {
-                new Claim(JwtClaimTypes.GivenName, user.FirstName),
-                new Claim(JwtClaimTypes.FamilyName, user.LastName),
-                new Claim(JwtClaimTypes.Role, "Visitor"),
-                new Claim(JwtClaimTypes.Address, user.Address),
-                new Claim("country", user.Country)
+                new Claim(JwtClaimTypes.Role, "Patient"),
             });
 
             await SendEmailConfirmationLink(user, returnUrl);
@@ -349,7 +348,7 @@ namespace IdentityServerHost.Quickstart.UI
             return Redirect(nameof(SuccessRegistration));
         }
 
-        private async Task SendEmailConfirmationLink(User user, string returnUrl)
+        private async Task SendEmailConfirmationLink(IdentityUser user, string returnUrl)
         {
             var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
 

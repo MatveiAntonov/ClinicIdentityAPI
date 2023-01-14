@@ -11,9 +11,7 @@ namespace IdentityServer.Server
             {
                 new IdentityResources.OpenId(),
                 new IdentityResources.Profile(),
-                new IdentityResources.Address(),
                 new IdentityResource("roles", "User role(s)", new List<string> { "role" }),
-                new IdentityResource("country", "Your country", new List<string> { "country" })
             };
 
         public static IEnumerable<ApiScope> ApiScopes =>
@@ -45,11 +43,9 @@ namespace IdentityServer.Server
                     { 
                         IdentityServerConstants.StandardScopes.OpenId,
                         IdentityServerConstants.StandardScopes.Profile,
-                        IdentityServerConstants.StandardScopes.Address,
                         "roles",
-						"serviceapi.scope",
-						"country"
-					},
+						"serviceapi.scope"
+                    },
                     ClientSecrets =
                     {
                         new Secret("ServiceClientSecret".Sha512())

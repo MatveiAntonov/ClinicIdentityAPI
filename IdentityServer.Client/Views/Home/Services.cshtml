@@ -7,7 +7,7 @@
 }
 <h1>Services</h1>
 
-@if ((await AuthorizationService.AuthorizeAsync(User, "CanCreateAndModifyData")).Succeeded)
+@if ((await AuthorizationService.AuthorizeAsync(User, "Receptionist")).Succeeded)
 {
     <p>
         <a asp-action="Create">Create New</a>
@@ -68,7 +68,7 @@
                 <td>
                     @Html.DisplayFor(modelItem => item.SpecializationName)
                 </td>
-                @if ((await AuthorizationService.AuthorizeAsync(User, "CanCreateAndModifyData")).Succeeded)
+                @if ((await AuthorizationService.AuthorizeAsync(User, "Receptionist")).Succeeded)
                 {
                     <td>
                         @Html.ActionLink("Edit", "Edit", new { /* id=item.PrimaryKey */ }) |

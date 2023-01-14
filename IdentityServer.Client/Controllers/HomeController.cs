@@ -48,7 +48,6 @@ namespace IdentityServer.Client.Controllers
             return View();
         }
 
-        [Authorize(Policy = "CanCreateAndModifyData")]
 		public async Task<IActionResult> Privacy()
 		{
             var idpClient = _httpClientFactory.CreateClient("IDPClient");
@@ -66,13 +65,6 @@ namespace IdentityServer.Client.Controllers
             {
                 throw new Exception("Problem while fetching data from UserInfo endpoint", response.Exception);
             }
-
-            var addressClaim = response.Claims.FirstOrDefault(c => c.Type.Equals("address"));
-
-            User.AddIdentity(new ClaimsIdentity(new List<Claim>
-            {
-                new Claim(addressClaim.Type.ToString(), addressClaim.Value.ToString())
-            }));
 
             return View();
         }

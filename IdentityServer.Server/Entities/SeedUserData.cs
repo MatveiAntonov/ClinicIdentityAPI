@@ -14,23 +14,23 @@ namespace IdentityServer.Server.Entities
             services.AddDbContext<UserContext>(options =>
                 options.UseSqlServer(connectionString));
 
-            services.AddIdentity<IdentityUser, IdentityRole>(o => {
+            services.AddIdentity<User, IdentityRole>(o => {
                 o.Password.RequireDigit = false;
                 o.Password.RequireNonAlphanumeric = false;
             }).AddEntityFrameworkStores<UserContext>()
             .AddDefaultTokenProviders();
 
-            using (var serviceProvider = services.BuildServiceProvider())
-            {
-                using (var scope = serviceProvider
-                .GetRequiredService<IServiceScopeFactory>().CreateScope())
-                {
-                    CreateUser(scope, "97a3aa4a-7a89-47f3-9814-74497fb92ccb", "Michail12345",
-                    "Receptionist", "mishka@mail.com");
-                    CreateUser(scope, "64aca900-7bc7-4645-b291-38f1b7b5963c", "Alena12345",
-                    "Patient", "alenka@mail.com");
-                }
-            }
+            //using (var serviceProvider = services.BuildServiceProvider())
+            //{
+            //    using (var scope = serviceProvider
+            //    .GetRequiredService<IServiceScopeFactory>().CreateScope())
+            //    {
+            //        CreateUser(scope, "97a3aa4a-7a89-47f3-9814-74497fb92ccb", "Michail12345",
+            //        "Receptionist", "mishka@mail.com");
+            //        CreateUser(scope, "64aca900-7bc7-4645-b291-38f1b7b5963c", "Alena12345",
+            //        "Patient", "alenka@mail.com");
+            //    }
+            //}
         }
 
         private static void CreateUser(IServiceScope scope, string id, string password, string role, string email)
@@ -39,7 +39,7 @@ namespace IdentityServer.Server.Entities
             var user = userMgr.FindByNameAsync(email).Result;
             if (user == null)
             {
-                user = new IdentityUser
+                user = new User
                 {
                     UserName = email,
                     Email = email,

@@ -28,13 +28,13 @@ namespace IdentityServer.Client.Controllers
 
             if (response.IsSuccessStatusCode)
             {
-            var servicesString = await response.Content.ReadAsStringAsync();
-            var services = JsonSerializer.Deserialize<List<ServiceViewModel>>(servicesString,
-                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-                
-            return View(services);
+                var servicesString = await response.Content.ReadAsStringAsync();
+                var services = JsonSerializer.Deserialize<List<ServiceViewModel>>(servicesString,
+                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+                return View(services);
             }
-            else if (response.StatusCode == HttpStatusCode.Unauthorized || 
+            else if (response.StatusCode == HttpStatusCode.Unauthorized ||
                 response.StatusCode == HttpStatusCode.Forbidden)
             {
                 return RedirectToAction("AccessDenied", "Auth");
@@ -48,8 +48,8 @@ namespace IdentityServer.Client.Controllers
             return View();
         }
 
-		public async Task<IActionResult> Privacy()
-		{
+        public async Task<IActionResult> Privacy()
+        {
             var idpClient = _httpClientFactory.CreateClient("IDPClient");
             var metaDataResponse = await idpClient.GetDiscoveryDocumentAsync();
 

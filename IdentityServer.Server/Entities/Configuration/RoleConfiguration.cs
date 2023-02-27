@@ -19,6 +19,12 @@ namespace IdentityServer.Server.Entities.Configuration
                 Name = "Patient",
                 NormalizedName = "PATIENT",
                 Id = "6d506b42-9fa0-4ef7-a92a-0b5b0a123665"
+            },
+            new IdentityRole
+            {
+                Name = "Doctor",
+                NormalizedName = "DOCTOR",
+                Id = "ecce8cb1-99d3-45f2-8602-febbcfdc6f3c"
             });
 
         }

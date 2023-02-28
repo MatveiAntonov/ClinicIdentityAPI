@@ -9,8 +9,9 @@ namespace IdentityServer.Server
     {
         public MappingProfile()
         {
-            CreateMap<UserRegistrationModel, IdentityUser>()
+            CreateMap<UserRegistrationModel, User>()
                 .ForMember(u => u.UserName, opt => opt.MapFrom(x => x.Email));
         }
     }
+
 }

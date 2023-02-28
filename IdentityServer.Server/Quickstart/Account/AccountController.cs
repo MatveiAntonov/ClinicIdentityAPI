@@ -4,26 +4,22 @@
 
 using AutoMapper;
 using EmailService;
+using Events;
 using IdentityModel;
 using IdentityServer.Server.Entities;
 using IdentityServer.Server.Entities.ViewModels;
-using IdentityServer4;
 using IdentityServer4.Events;
 using IdentityServer4.Extensions;
 using IdentityServer4.Models;
 using IdentityServer4.Services;
 using IdentityServer4.Stores;
-using IdentityServer4.Test;
+using MassTransit;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System;
-using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Security.Claims;
-using System.Threading.Tasks;
 
 namespace IdentityServerHost.Quickstart.UI
 {
@@ -40,15 +36,18 @@ namespace IdentityServerHost.Quickstart.UI
         private readonly IClientStore _clientStore;
         private readonly IAuthenticationSchemeProvider _schemeProvider;
         private readonly IEventService _events;
-        private readonly UserManager<IdentityUser> _userManager;
-        private readonly SignInManager<IdentityUser> _signInManager;
+        private readonly UserManager<User> _userManager;
+        private readonly SignInManager<User> _signInManager;
         private readonly IMapper _mapper;
         private readonly IEmailSender _emailSender;
+        private readonly IPublishEndpoint _publishEndpoint;
+
+        private readonly IRequestClient<PhotoAdded> _requestClient;
 
         public AccountController(IIdentityServerInteractionService interaction, IClientStore clientStore,
             IAuthenticationSchemeProvider schemeProvider, IEventService events,
-            UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager, IMapper mapper,
-            IEmailSender emailSender)
+            UserManager<User> userManager, SignInManager<User> signInManager, IMapper mapper,
+            IEmailSender emailSender, IPublishEndpoint publishEndpoint, IRequestClient<PhotoAdded> requestClient)
         {
             _interaction = interaction;
             _clientStore = clientStore;
@@ -58,6 +57,8 @@ namespace IdentityServerHost.Quickstart.UI
             _signInManager = signInManager;
             _mapper = mapper;
             _emailSender = emailSender;
+            _publishEndpoint = publishEndpoint;
+            _requestClient = requestClient;
         }
 
         /// <summary>
@@ -319,10 +320,7 @@ namespace IdentityServerHost.Quickstart.UI
                 return View(userModel);
             }
 
-            var user = _mapper.Map<IdentityUser>(userModel);
-
-
-            // CHANGE
+            var user = _mapper.Map<User>(userModel);
 
             var result = await _userManager.CreateAsync(user, userModel.Password);
             if (!result.Succeeded)
@@ -334,7 +332,31 @@ namespace IdentityServerHost.Quickstart.UI
                 return View(userModel);
             }
 
-            //await _userManager.SetTwoFactorEnabledAsync(user, true);
+
+            byte[] photoDto = { };
+
+			using (var ms = new MemoryStream())
+			{
+				userModel.PhotoFile.CopyTo(ms);
+				photoDto = ms.ToArray();
+			}
+
+			var photoRequest = new
+            {
+                PhotoName = userModel.PhotoFile.Name,
+                PhotoData = photoDto
+			};
+
+			var photoResponse = await _requestClient.GetResponse<PhotoAddedResponse>(photoRequest);
+
+            await _publishEndpoint.Publish<AccountCreated>(new
+            {
+                Id = user.Id,
+                PhoneNumber = user.PhoneNumber,
+                Url = photoResponse.Message.PhotoUrl
+            }); ;
+
+            await _userManager.SetTwoFactorEnabledAsync(user, true);
 
             await _userManager.AddToRoleAsync(user, "Patient");
 
@@ -348,7 +370,7 @@ namespace IdentityServerHost.Quickstart.UI
             return Redirect(nameof(SuccessRegistration));
         }
 
-        private async Task SendEmailConfirmationLink(IdentityUser user, string returnUrl)
+        private async Task SendEmailConfirmationLink(User user, string returnUrl)
         {
             var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
 
@@ -413,13 +435,13 @@ namespace IdentityServerHost.Quickstart.UI
                 return RedirectToAction(nameof(ForgotPasswordConfirmation));
 
             var token = await _userManager.GeneratePasswordResetTokenAsync(user);
-            var callback = Url.Action(nameof(ResetPassword), "Account", 
+            var callback = Url.Action(nameof(ResetPassword), "Account",
                 new
-            {
-                token,
-                email = user.Email,
-                returnUrl
-            }, Request.Scheme);
+                {
+                    token,
+                    email = user.Email,
+                    returnUrl
+                }, Request.Scheme);
 
             var message = new Message(new string[] { user.Email }, "Reset password token", callback,
                 null);

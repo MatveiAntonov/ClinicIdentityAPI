@@ -38,7 +38,7 @@ namespace IdentityServer.Server
                     ClientName= "ServiceClient",
                     ClientId = "serviceclient",
                     AllowedGrantTypes = GrantTypes.Code,
-                    RedirectUris = new List<string> { "https://localhost:5010/signin-oidc" },
+                    RedirectUris = new List<string> { "https://localhost:6007/signin-oidc" },
                     AllowedScopes = 
                     { 
                         IdentityServerConstants.StandardScopes.OpenId,
@@ -51,9 +51,9 @@ namespace IdentityServer.Server
                         new Secret("ServiceClientSecret".Sha512())
                     },
                     RequirePkce = true,
-                    PostLogoutRedirectUris = new List<string> { "https://localhost:5010/signout-callback-oidc" },
+                    PostLogoutRedirectUris = new List<string> { "https://localhost:6007/signout-callback-oidc" },
                     RequireConsent = true,
-                    ClientUri = "https://localhost:5010",
+                    ClientUri = "https://localhost:6007",
                     AccessTokenLifetime = 120,
                     AllowOfflineAccess = true,
                     UpdateAccessTokenClaimsOnRefresh = true

@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace IdentityServer.Server.Migrations
 {
     [DbContext(typeof(UserContext))]
-    [Migration("20221222112801_EditClaimsUserContext")]
-    partial class EditClaimsUserContext
+    [Migration("20230224115345_AddedFieldForPhotos")]
+    partial class AddedFieldForPhotos
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -23,6 +23,30 @@ namespace IdentityServer.Server.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder, 1L, 1);
+
+            modelBuilder.Entity("IdentityServer.Server.Entities.Photo", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+
+                    b.Property<string>("PhotoName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PhotoUrl")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Id")
+                        .IsUnique();
+
+                    b.ToTable("Photos");
+                });
 
             modelBuilder.Entity("IdentityServer.Server.Entities.User", b =>
                 {
@@ -36,9 +60,6 @@ namespace IdentityServer.Server.Migrations
                         .IsConcurrencyToken()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime>("DateOfBirth")
-                        .HasColumnType("datetime2");
-
                     b.Property<string>("Email")
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
@@ -46,23 +67,11 @@ namespace IdentityServer.Server.Migrations
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("bit");
 
-                    b.Property<string>("FirstName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("LastName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("bit");
 
                     b.Property<DateTimeOffset?>("LockoutEnd")
                         .HasColumnType("datetimeoffset");
-
-                    b.Property<string>("MiddleName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("NormalizedEmail")
                         .HasMaxLength(256)
@@ -81,6 +90,9 @@ namespace IdentityServer.Server.Migrations
                     b.Property<bool>("PhoneNumberConfirmed")
                         .HasColumnType("bit");
 
+                    b.Property<int?>("PhotoId")
+                        .HasColumnType("int");
+
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("nvarchar(max)");
 
@@ -93,6 +105,9 @@ namespace IdentityServer.Server.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Id")
+                        .IsUnique();
+
                     b.HasIndex("NormalizedEmail")
                         .HasDatabaseName("EmailIndex");
 
@@ -100,6 +115,10 @@ namespace IdentityServer.Server.Migrations
                         .IsUnique()
                         .HasDatabaseName("UserNameIndex")
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
+
+                    b.HasIndex("PhotoId")
+                        .IsUnique()
+                        .HasFilter("[PhotoId] IS NOT NULL");
 
                     b.ToTable("AspNetUsers", (string)null);
                 });
@@ -134,16 +153,23 @@ namespace IdentityServer.Server.Migrations
                         new
                         {
                             Id = "c3a0cb55-ddaf-4f2f-8419-f3f937698aa1",
-                            ConcurrencyStamp = "436ab70d-465d-4406-b17b-40e8cb31866d",
+                            ConcurrencyStamp = "f1c9e555-70af-4315-809a-445bae8fae07",
                             Name = "Receptionist",
                             NormalizedName = "RECEPTIONIST"
                         },
                         new
                         {
                             Id = "6d506b42-9fa0-4ef7-a92a-0b5b0a123665",
-                            ConcurrencyStamp = "7597787c-b4ba-444e-a5a8-573bf642fec2",
+                            ConcurrencyStamp = "0711bbb7-d863-4824-820d-25ecbba79217",
                             Name = "Patient",
                             NormalizedName = "PATIENT"
+                        },
+                        new
+                        {
+                            Id = "ecce8cb1-99d3-45f2-8602-febbcfdc6f3c",
+                            ConcurrencyStamp = "9577d02b-5146-48b0-86a5-2dba9664ab09",
+                            Name = "Doctor",
+                            NormalizedName = "DOCTOR"
                         });
                 });
 
@@ -251,6 +277,15 @@ namespace IdentityServer.Server.Migrations
                     b.HasKey("UserId", "LoginProvider", "Name");
 
                     b.ToTable("AspNetUserTokens", (string)null);
+                });
+
+            modelBuilder.Entity("IdentityServer.Server.Entities.User", b =>
+                {
+                    b.HasOne("IdentityServer.Server.Entities.Photo", "Photo")
+                        .WithOne()
+                        .HasForeignKey("IdentityServer.Server.Entities.User", "PhotoId");
+
+                    b.Navigation("Photo");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>

@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace IdentityServer.Server.Migrations.IdentityServer.ConfigurationDb
 {
     [DbContext(typeof(ConfigurationDbContext))]
-    [Migration("20221222111432_EditClaimsConfigurationDbContext")]
-    partial class EditClaimsConfigurationDbContext
+    [Migration("20230119174840_InitialConfigurationMigration")]
+    partial class InitialConfigurationMigration
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {

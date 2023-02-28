@@ -1,9 +1,9 @@
 using EmailService;
-using IdentityServer.Server;
+using Events;
 using IdentityServer.Server.CustomTokenProviders;
 using IdentityServer.Server.Entities;
 using IdentityServer.Server.InitialSeed;
-using IdentityServerHost.Quickstart.UI;
+using MassTransit;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System.Reflection;
@@ -19,6 +19,13 @@ var emailConfig = builder.Configuration
 builder.Services.AddSingleton(emailConfig);
 builder.Services.AddScoped<IEmailSender, EmailSender>();
 
+builder.Services.AddMassTransit(x =>
+{
+    x.AddRequestClient<AccountCreated>();
+
+    x.UsingRabbitMq();
+});
+
 builder.Services.AddControllersWithViews();
 
 var migrationAssembly = typeof(Program).GetTypeInfo().Assembly.GetName().Name;
@@ -26,7 +33,7 @@ var migrationAssembly = typeof(Program).GetTypeInfo().Assembly.GetName().Name;
 builder.Services.AddDbContext<UserContext>(options => options
     .UseSqlServer(builder.Configuration.GetConnectionString("identitySqlConnection")));
 
-builder.Services.AddIdentity<IdentityUser, IdentityRole>(opt =>
+builder.Services.AddIdentity<User, IdentityRole>(opt =>
 {
     opt.Password.RequireNonAlphanumeric = false;
     opt.Password.RequiredLength = 8;
@@ -39,7 +46,7 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>(opt =>
 })
     .AddEntityFrameworkStores<UserContext>()
     .AddDefaultTokenProviders()
-    .AddTokenProvider<EmailConfirmationTokenProvider<IdentityUser>>("emailconfirmation");
+    .AddTokenProvider<EmailConfirmationTokenProvider<User>>("emailconfirmation");
 
 
 builder.Services.AddIdentityServer(options =>
@@ -58,7 +65,7 @@ builder.Services.AddIdentityServer(options =>
             o.UseSqlServer(builder.Configuration.GetConnectionString("sqlConnection"),
         sql => sql.MigrationsAssembly(migrationAssembly));
     })
-    .AddAspNetIdentity<IdentityUser>()
+    .AddAspNetIdentity<User>()
     .AddDeveloperSigningCredential();
 
 builder.Services.Configure<DataProtectionTokenProviderOptions>(opt =>
@@ -69,21 +76,33 @@ builder.Services.Configure<EmailConfirmationTokenProviderOptions>(opt =>
 
 var app = builder.Build();
 
+app.UseDeveloperExceptionPage();
+
+
 app.UseStaticFiles();
 app.UseRouting();
 
 app.UseIdentityServer();
 
 app.UseAuthorization();
+
+app.UseDeveloperExceptionPage();
+
+app.UseCookiePolicy(new CookiePolicyOptions
+{
+    MinimumSameSitePolicy = SameSiteMode.Strict
+});
+
 app.UseEndpoints(endpoints =>
 {
     endpoints.MapDefaultControllerRoute();
 });
 
+
 var config = app.Services.GetRequiredService<IConfiguration>();
 var connectionString = config.GetConnectionString("identitySqlConnection");
 
-app.MigrateDatabase();
 SeedUserData.EnsureSeedData(connectionString);
+app.MigrateDatabase();
 
 app.Run();

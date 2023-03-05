@@ -3,6 +3,8 @@ using Events;
 using IdentityServer.Server.CustomTokenProviders;
 using IdentityServer.Server.Entities;
 using IdentityServer.Server.InitialSeed;
+using IdentityServer.Server.Interfaces;
+using IdentityServer.Server.Repositories;
 using MassTransit;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -19,11 +21,22 @@ var emailConfig = builder.Configuration
 builder.Services.AddSingleton(emailConfig);
 builder.Services.AddScoped<IEmailSender, EmailSender>();
 
+builder.Services.AddScoped<IPhotoRepository, PhotoRepository>();
+
+
 builder.Services.AddMassTransit(x =>
 {
-    x.AddRequestClient<AccountCreated>();
+    x.AddRequestClient<PhotoAdded>();
 
-    x.UsingRabbitMq();
+	x.UsingRabbitMq((context, cfg) =>
+	{
+		cfg.Host("rabbit-mq", "/", h =>
+		{
+			h.Username("guest");
+			h.Password("guest");
+		});
+		cfg.ConfigureEndpoints(context);
+	});
 });
 
 builder.Services.AddControllersWithViews();

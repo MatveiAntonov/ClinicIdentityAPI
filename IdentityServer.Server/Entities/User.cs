@@ -6,6 +6,5 @@ namespace IdentityServer.Server.Entities
     {
         public int? PhotoId { get; set; }
         public Photo? Photo { get; set; }
-		public string? PhotoName { get; set; } = String.Empty;
 	}
 }

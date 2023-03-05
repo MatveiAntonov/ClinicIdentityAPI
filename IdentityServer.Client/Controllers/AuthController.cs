@@ -12,7 +12,6 @@ namespace IdentityServer.Client.Controllers
 			return Challenge(new AuthenticationProperties
 			{
 				RedirectUri = "/"
-				
             });
 		}
 

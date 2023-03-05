@@ -9,9 +9,12 @@ namespace IdentityServer.Server.EntityTypeConfigurations
         public void Configure(EntityTypeBuilder<Photo> builder)
         {
             builder.HasKey(photo => photo.Id);
-            builder.HasIndex(photo => photo.Id).IsUnique();
+            builder.Property(photo => photo.Id);
+			builder.Property(photo => photo.PhotoId).IsRequired();
+			builder.HasIndex(photo => photo.PhotoId).IsUnique();
+			builder.HasIndex(photo => photo.Id).IsUnique();
             builder.Property(photo => photo.PhotoUrl)
                 .IsRequired();
-        }
+		}
     }
 }

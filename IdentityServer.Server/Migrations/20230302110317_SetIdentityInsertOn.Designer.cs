@@ -4,6 +4,7 @@ using IdentityServer.Server.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace IdentityServer.Server.Migrations
 {
     [DbContext(typeof(UserContext))]
-    partial class UserContextModelSnapshot : ModelSnapshot
+    [Migration("20230302110317_SetIdentityInsertOn")]
+    partial class SetIdentityInsertOn
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -30,9 +32,6 @@ namespace IdentityServer.Server.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
 
-                    b.Property<int>("PhotoId")
-                        .HasColumnType("int");
-
                     b.Property<string>("PhotoName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -44,9 +43,6 @@ namespace IdentityServer.Server.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("Id")
-                        .IsUnique();
-
-                    b.HasIndex("PhotoId")
                         .IsUnique();
 
                     b.ToTable("Photos");
@@ -157,21 +153,21 @@ namespace IdentityServer.Server.Migrations
                         new
                         {
                             Id = "c3a0cb55-ddaf-4f2f-8419-f3f937698aa1",
-                            ConcurrencyStamp = "2358cfd8-2e64-4a1b-b128-61108b57f271",
+                            ConcurrencyStamp = "ac1db833-b9b1-4b5d-8996-87f8a75418a8",
                             Name = "Receptionist",
                             NormalizedName = "RECEPTIONIST"
                         },
                         new
                         {
                             Id = "6d506b42-9fa0-4ef7-a92a-0b5b0a123665",
-                            ConcurrencyStamp = "94e11b29-8fc6-42b5-8be4-d26c22124206",
+                            ConcurrencyStamp = "1c1a3f60-53a2-4003-9fd1-0035a240e658",
                             Name = "Patient",
                             NormalizedName = "PATIENT"
                         },
                         new
                         {
                             Id = "ecce8cb1-99d3-45f2-8602-febbcfdc6f3c",
-                            ConcurrencyStamp = "4b9af709-31d8-47c8-9981-223c0dc14c55",
+                            ConcurrencyStamp = "73688e56-cd28-40b2-a7cb-b74907919eeb",
                             Name = "Doctor",
                             NormalizedName = "DOCTOR"
                         });
